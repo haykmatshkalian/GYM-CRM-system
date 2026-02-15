@@ -1,0 +1,7 @@
+# type,id,firstName,lastName,active|specialization|...,date,minutes
+trainee,T001,John,Smith,true
+trainee,T002,Emily,Stone,true
+trainer,R001,Sarah,Connor,Strength
+trainer,R002,John,Smith,Cardio
+training,N001,T001,R001,Strength Basics,2025-01-12,60
+training,N002,T002,R002,Cardio Starter,2025-01-15,45
