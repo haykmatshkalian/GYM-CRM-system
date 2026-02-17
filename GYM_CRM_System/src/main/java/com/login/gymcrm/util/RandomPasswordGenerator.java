@@ -5,11 +5,11 @@ import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 
 @Component
-public class RandomPasswordGenerator implements PasswordGenerator {
+public class RandomPasswordGenerator {
     private static final char[] ALLOWED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
     private final SecureRandom random = new SecureRandom();
 
-    @Override
+    
     public String generate(int length) {
         if (length <= 0) {
             throw new IllegalArgumentException("Length must be positive");

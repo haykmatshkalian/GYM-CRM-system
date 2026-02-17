@@ -15,6 +15,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Component;
+import org.apache.commons.lang3.StringUtils;
+
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class StorageInitializerPostProcessor implements BeanPostProcessor {
@@ -47,18 +50,8 @@ public class StorageInitializerPostProcessor implements BeanPostProcessor {
         return bean;
     }
 
-    private void loadSeedData(InMemoryStorage storage) {
-        Resource resource = resolveResource(seedPath);
-        if (resource == null || !resource.exists()) {
-            log.warn("Seed data resource not found at path={}", seedPath);
-            return;
-        }
-        Map<String, Trainee> trainees = storage.getNamespace(StorageNamespaces.TRAINEE);
-        Map<String, Trainer> trainers = storage.getNamespace(StorageNamespaces.TRAINER);
-        Map<String, Training> trainings = storage.getNamespace(StorageNamespaces.TRAINING);
-        RandomPasswordGenerator passwordGenerator = new RandomPasswordGenerator();
+    private void readAndProcessSeedRows(Resource resource, Map<String, Trainee> trainees, Map<String, Trainer> trainers, Map<String, Training> trainings,  RandomPasswordGenerator passwordGenerator){
 
-        log.info("Loading seed data from {}", seedPath);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -78,6 +71,24 @@ public class StorageInitializerPostProcessor implements BeanPostProcessor {
         } catch (IOException ex) {
             log.error("Failed to load seed data", ex);
         }
+    }
+
+    private void loadSeedData(InMemoryStorage storage) {
+        Optional<Resource> resourceOptional = resolveResource(seedPath);
+        if (resourceOptional.isEmpty() || !resourceOptional.get().exists()) {
+
+            log.warn("Seed data resource not found at path={}", seedPath);
+            return;
+        }
+        Resource resource = resourceOptional.get();
+        Map<String, Trainee> trainees = storage.getNamespace(StorageNamespaces.TRAINEE);
+        Map<String, Trainer> trainers = storage.getNamespace(StorageNamespaces.TRAINER);
+        Map<String, Training> trainings = storage.getNamespace(StorageNamespaces.TRAINING);
+        RandomPasswordGenerator passwordGenerator = new RandomPasswordGenerator();
+
+        log.info("Loading seed data from {}", seedPath);
+
+        readAndProcessSeedRows(resource, trainees, trainers, trainings, passwordGenerator);
     }
 
     private void loadTrainee(String[] tokens, Map<String, Trainee> trainees,
@@ -132,17 +143,18 @@ public class StorageInitializerPostProcessor implements BeanPostProcessor {
         trainings.put(id, training);
     }
 
-    private Resource resolveResource(String path) {
-        if (path == null) {
-            return null;
+    private Optional<Resource> resolveResource(String path) {
+        if (StringUtils.isBlank(path)) {
+            return Optional.empty();
         }
         if (path.startsWith("classpath:")) {
-            return new ClassPathResource(path.substring("classpath:".length()));
+            return Optional.of(new ClassPathResource(path.substring("classpath:".length())));
         }
         try {
-            return new UrlResource("file:" + path);
+            return Optional.of(new UrlResource("file:" + path));
         } catch (Exception ex) {
-            return null;
+            log.warn("Invalid resource path: {}", path, ex);
+            return Optional.empty();
         }
     }
 
@@ -188,11 +200,11 @@ public class StorageInitializerPostProcessor implements BeanPostProcessor {
     private int parseSuffix(String base, String username) {
         String lowerBase = base.toLowerCase(Locale.US);
         String lowerUser = username.toLowerCase(Locale.US);
-        if (!lowerUser.startsWith(lowerBase)) {
+        if (!lowerUser.startsWith(lowerBase) || lowerUser.length() == lowerBase.length()) {
             return 0;
         }
         String suffix = username.substring(base.length());
-        if (suffix.isEmpty() || !suffix.chars().allMatch(Character::isDigit)) {
+        if (!suffix.chars().allMatch(Character::isDigit)) {
             return 0;
         }
         try {

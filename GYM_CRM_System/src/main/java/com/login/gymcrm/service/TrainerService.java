@@ -4,23 +4,27 @@ import com.login.gymcrm.dao.TrainerDao;
 import com.login.gymcrm.model.Trainer;
 import com.login.gymcrm.service.exception.EntityNotFoundException;
 import com.login.gymcrm.service.exception.ValidationException;
-import com.login.gymcrm.util.IdGenerator;
-import com.login.gymcrm.util.PasswordGenerator;
+import com.login.gymcrm.util.UuidGenerator;
+import com.login.gymcrm.util.RandomPasswordGenerator;
 import com.login.gymcrm.util.UsernameGenerator;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 import java.util.List;
+
 
 @Service
 public class TrainerService {
     private static final Logger log = LoggerFactory.getLogger(TrainerService.class);
 
     private TrainerDao trainerDao;
-    private IdGenerator idGenerator;
+    private UuidGenerator idGenerator;
+    private RandomPasswordGenerator passwordGenerator;
     private UsernameGenerator usernameGenerator;
-    private PasswordGenerator passwordGenerator;
 
     public Trainer createProfile(String firstName, String lastName, String specialization) {
         validateName(firstName, lastName);
@@ -35,7 +39,7 @@ public class TrainerService {
     }
 
     public Trainer updateProfile(Trainer updated) {
-        if (updated == null || updated.getId() == null) {
+        if (updated == null || StringUtils.isBlank(updated.getId())) {
             throw new ValidationException("Trainer id is required for update");
         }
         Trainer existing = trainerDao.findById(updated.getId())
@@ -51,7 +55,7 @@ public class TrainerService {
     }
 
     public Trainer selectProfile(String id) {
-        if (id == null || id.isBlank()) {
+        if (StringUtils.isBlank(id)) {
             throw new ValidationException("Trainer id is required for select");
         }
         return trainerDao.findById(id)
@@ -63,28 +67,28 @@ public class TrainerService {
     }
 
     private void validateName(String firstName, String lastName) {
-        if (firstName == null || firstName.isBlank() || lastName == null || lastName.isBlank()) {
+        if (StringUtils.isBlank(firstName) || StringUtils.isBlank(lastName)) {
             throw new ValidationException("First and last name are required");
         }
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public void setTrainerDao(TrainerDao trainerDao) {
         this.trainerDao = trainerDao;
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
-    public void setIdGenerator(IdGenerator idGenerator) {
+    @Autowired
+    public void setIdGenerator(UuidGenerator idGenerator) {
         this.idGenerator = idGenerator;
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public void setUsernameGenerator(UsernameGenerator usernameGenerator) {
         this.usernameGenerator = usernameGenerator;
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
-    public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
+    @Autowired
+    public void setPasswordGenerator(RandomPasswordGenerator passwordGenerator) {
         this.passwordGenerator = passwordGenerator;
     }
 }

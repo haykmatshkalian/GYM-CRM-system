@@ -21,6 +21,7 @@ class UsernameGeneratorTest {
 
             Trainee trainee = new Trainee("T100", "John", "Smith", "John.Smith", "secret", true);
             traineeDao.save(trainee);
+
             Trainer trainer = new Trainer("R100", "John", "Smith", "John.Smith1", "secret", "Cardio");
             trainerDao.save(trainer);
 

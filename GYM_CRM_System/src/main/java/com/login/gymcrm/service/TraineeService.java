@@ -4,12 +4,15 @@ import com.login.gymcrm.dao.TraineeDao;
 import com.login.gymcrm.model.Trainee;
 import com.login.gymcrm.service.exception.EntityNotFoundException;
 import com.login.gymcrm.service.exception.ValidationException;
-import com.login.gymcrm.util.IdGenerator;
-import com.login.gymcrm.util.PasswordGenerator;
+import com.login.gymcrm.util.RandomPasswordGenerator;
 import com.login.gymcrm.util.UsernameGenerator;
+import com.login.gymcrm.util.UuidGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.StringUtils;
+
 
 import java.util.List;
 
@@ -18,9 +21,9 @@ public class TraineeService {
     private static final Logger log = LoggerFactory.getLogger(TraineeService.class);
 
     private TraineeDao traineeDao;
-    private IdGenerator idGenerator;
+    private UuidGenerator idGenerator;
     private UsernameGenerator usernameGenerator;
-    private PasswordGenerator passwordGenerator;
+    private RandomPasswordGenerator passwordGenerator;
 
     public Trainee createProfile(String firstName, String lastName) {
         validateName(firstName, lastName);
@@ -35,7 +38,7 @@ public class TraineeService {
     }
 
     public Trainee updateProfile(Trainee updated) {
-        if (updated == null || updated.getId() == null) {
+        if (updated == null || StringUtils.isBlank(updated.getId())) {
             throw new ValidationException("Trainee id is required for update");
         }
         Trainee existing = traineeDao.findById(updated.getId())
@@ -51,7 +54,7 @@ public class TraineeService {
     }
 
     public void deleteProfile(String id) {
-        if (id == null || id.isBlank()) {
+        if (StringUtils.isBlank(id)) {
             throw new ValidationException("Trainee id is required for delete");
         }
         traineeDao.deleteById(id);
@@ -59,7 +62,7 @@ public class TraineeService {
     }
 
     public Trainee selectProfile(String id) {
-        if (id == null || id.isBlank()) {
+        if (StringUtils.isBlank(id)) {
             throw new ValidationException("Trainee id is required for select");
         }
         return traineeDao.findById(id)
@@ -71,28 +74,28 @@ public class TraineeService {
     }
 
     private void validateName(String firstName, String lastName) {
-        if (firstName == null || firstName.isBlank() || lastName == null || lastName.isBlank()) {
+        if (StringUtils.isBlank(firstName) || StringUtils.isBlank(lastName)) {
             throw new ValidationException("First and last name are required");
         }
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public void setTraineeDao(TraineeDao traineeDao) {
         this.traineeDao = traineeDao;
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
-    public void setIdGenerator(IdGenerator idGenerator) {
+    @Autowired
+    public void setIdGenerator(UuidGenerator idGenerator) {
         this.idGenerator = idGenerator;
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public void setUsernameGenerator(UsernameGenerator usernameGenerator) {
         this.usernameGenerator = usernameGenerator;
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
-    public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
+    @Autowired
+    public void setPasswordGenerator(RandomPasswordGenerator passwordGenerator) {
         this.passwordGenerator = passwordGenerator;
     }
 }
