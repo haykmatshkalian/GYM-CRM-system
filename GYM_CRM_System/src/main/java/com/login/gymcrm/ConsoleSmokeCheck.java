@@ -5,11 +5,17 @@ import com.login.gymcrm.facade.GymCrmFacade;
 import com.login.gymcrm.model.Trainee;
 import com.login.gymcrm.model.Trainer;
 import com.login.gymcrm.model.Training;
+import com.login.gymcrm.CsvSnapshotWriter;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
+
+import java.io.IOException;
+import java.nio.file.Path;
+
+
 
 public class ConsoleSmokeCheck {
 
@@ -18,6 +24,10 @@ public class ConsoleSmokeCheck {
              Scanner scanner = new Scanner(System.in)) {
 
             GymCrmFacade facade = context.getBean(GymCrmFacade.class);
+            String seedPath = context.getEnvironment().getProperty("storage.seed.path", "./config/seed-data.csv");
+            Path csvPath = Path.of(seedPath).toAbsolutePath();
+            CsvSnapshotWriter snapshotWriter = new CsvSnapshotWriter();
+
 
             boolean running = true;
             while (running) {
@@ -34,9 +44,20 @@ public class ConsoleSmokeCheck {
                 }
             }
 
+            persistSnapshot(facade, snapshotWriter, csvPath);
             System.out.println("Bye.");
         }
     }
+
+    private static void persistSnapshot(GymCrmFacade facade, CsvSnapshotWriter writer, Path csvPath) {
+        try {
+            writer.save(csvPath, facade.listTrainees(), facade.listTrainers(), facade.listTrainings());
+            System.out.println("Data saved to: " + csvPath);
+        } catch (IOException ex) {
+            System.out.println("Failed to save data: " + ex.getMessage());
+        }
+    }
+
 
     private static void printMainMenu() {
         System.out.println("\n=== GYM CRM INTERACTIVE DEMO ===");
